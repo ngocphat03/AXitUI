@@ -1,0 +1,16 @@
+{
+    "name": "AXit.UI",
+    "rootNamespace": "",
+    "references": [
+        "GUID:76a379a99ce701f489ac7753249f65dd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
