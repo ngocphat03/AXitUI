@@ -4,9 +4,9 @@
     using UnityEngine;
     using System.Collections;
     using System.Collections.Generic;
+    using AXitUnityTemplate.AssetLoader.Runtime.Interface;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
-    using AXitUnityTemplate.AssetLoader.Runtime.Scripts.Utilities;
-    using AXitUnityTemplate.AssetLoader.Runtime.Scripts.Interfaces;
+    using AXitUnityTemplate.AssetLoader.Runtime.Utilities;
 
     public class ScreenManager : MonoBehaviour
     {
