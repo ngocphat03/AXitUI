@@ -4,17 +4,34 @@
     using UnityEngine;
     using System.Collections;
     using System.Collections.Generic;
-    using AXitUnityTemplate.AssetLoader.Runtime.Interface;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
+    using AXitUnityTemplate.AssetLoader.Runtime.Interface;
+
+#if ZENJECT
+    using Zenject;
+#else
     using AXitUnityTemplate.AssetLoader.Runtime.Utilities;
+#endif
 
     public class ScreenManager : MonoBehaviour
     {
         [field: SerializeField] public Transform OpenedScreenParent { get; private set; }
         [field: SerializeField] public Transform ClosedScreenParent { get; private set; }
 
+#if ZENJECT
+        public ScreenFactory ScreenFactory { get; private set; }
+        public IAssetLoader  AssetLoader   { get; private set; }
+
+        [Inject]
+        public void Init(ScreenFactory screenFactory, IAssetLoader assetLoader)
+        {
+            this.ScreenFactory = screenFactory;
+            this.AssetLoader   = assetLoader;
+        }
+#else
         public readonly ScreenFactory ScreenFactory = new();
         public static   IAssetLoader  AssetLoader => DependencyLocator.AssetLoader;
+#endif
 
         private IScreenPresenter CurrentScreen { get; set; }
 
@@ -82,7 +99,7 @@
             IEnumerator InstantiateScreen(Action<T> callback)
             {
                 screenPresenter = this.ScreenFactory.CreateScreenPresenter<T>();
-                var loadOperation = ScreenManager.AssetLoader.LoadAssetAsync<GameObject>(screenPresenter.ScreenPath);
+                var loadOperation = AssetLoader.LoadAssetAsync<GameObject>(screenPresenter.ScreenPath);
 
                 // Wait until asset is loaded
                 while (!loadOperation.IsCompleted) yield return null;
