@@ -1,4 +1,4 @@
-﻿namespace AXitUnityTemplate.AXitUI.Runtime.Scripts.ScreenTransition
+﻿namespace AXitUnityTemplate.UI.Runtime.Scripts.ScreenTransition
 {
     using System;
     using UnityEngine;
@@ -38,19 +38,23 @@
                 director.stopped        += this.OnAnimationComplete;
             }
         }
-        
+
         public void PlayIntroAnimation(Action onFinish = null) => this.PlayAnimation(this.intro, onFinish);
 
         public void PlayOutroAnimation(Action onFinish = null) => this.PlayAnimation(this.outro, onFinish);
 
         private void PlayAnimation(PlayableDirector animationPlay, Action onFinish)
         {
-            if (this.isPlaying || animationPlay == null) return;
+            // Just play one times
+            if (this.isPlaying) return;
+            
+            // If view don't has animation. Call finish action
+            if (animationPlay == null) onFinish?.Invoke();
 
-            this.isPlaying           = true;
+            this.isPlaying         = true;
             this.onFinishAnimation = onFinish;
             this.SetInputLock(false);
-            animationPlay.Play();
+            animationPlay?.Play();
         }
 
         private void OnAnimationComplete(PlayableDirector director)
@@ -61,6 +65,6 @@
             this.onFinishAnimation = null;
         }
 
-        private void SetInputLock(bool value) { this.eventSystem.enabled = this.lockInput && this.eventSystem != null && value; }
+        private void SetInputLock(bool value) { this.eventSystem.enabled = this.lockInput && value; }
     }
 }

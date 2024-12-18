@@ -1,12 +1,10 @@
 ﻿namespace AXitUnityTemplate.UI.Runtime.Scripts.Managers
 {
+    using System;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
 
 #if ZENJECT
     using Zenject;
-
-#else
-    using System;
 #endif
 
     public class ScreenFactory
@@ -17,6 +15,15 @@
 #else
         public ScreenFactory()
 #endif
+
+        public IScreenPresenter CreateScreenPresenter(Type screenPresenterType)
+        {
+#if ZENJECT
+            return this.diContainer.Instantiate(screenPresenterType) as IScreenPresenter;
+#else
+            return Activator.CreateInstance(screenPresenterType) as IScreenPresenter;
+#endif
+        }
 
         public T CreateScreenPresenter<T>() where T : IScreenPresenter
         {

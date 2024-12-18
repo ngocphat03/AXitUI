@@ -1,14 +1,17 @@
 ﻿namespace AXitUnityTemplate.UI.Runtime.Scripts.Managers
 {
     using System;
+    using System.Linq;
     using UnityEngine;
     using System.Collections;
     using System.Collections.Generic;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
     using AXitUnityTemplate.AssetLoader.Runtime.Interface;
+    using AXitUnityTemplate.AXitUI.Runtime.Scripts.Screens.Base;
 
 #if ZENJECT
     using Zenject;
+
 #else
     using AXitUnityTemplate.AssetLoader.Runtime.Utilities;
 #endif
@@ -27,6 +30,7 @@
         {
             this.ScreenFactory = screenFactory;
             this.AssetLoader   = assetLoader;
+            this.FindScreenInScene();
         }
 #else
         public readonly ScreenFactory ScreenFactory = new();
@@ -125,5 +129,21 @@
         }
 
         public void CloseCurrentScreen() { this.CurrentScreen?.CloseView(); }
+
+        private void FindScreenInScene()
+        {
+            var allScreens = this.OpenedScreenParent.GetComponentsInChildren<BaseView>()
+                                 .Concat(this.ClosedScreenParent.GetComponentsInChildren<BaseView>()).ToArray();
+            foreach (var baseView in allScreens)
+            {
+                if (baseView is not IScreenDefaultInScene screenDefault) continue;
+
+                var screenPresenter = this.ScreenFactory.CreateScreenPresenter(screenDefault.TypeScreenPresenter);
+                
+                // Set up view
+                this.screensPresenterLoaded[screenDefault.TypeScreenPresenter] = screenPresenter;
+                baseView.OnViewReady += () => screenPresenter.SetView(baseView);
+            }
+        }
     }
 }

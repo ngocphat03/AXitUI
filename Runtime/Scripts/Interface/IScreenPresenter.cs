@@ -14,8 +14,6 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Interface
 
         public void SetView(IScreenView viewInstance, Action<IScreenPresenter> onClose = null);
 
-        public Transform GetViewParent();
-
         public Transform CurrentTransform { get; }
         
         public void OpenView();
@@ -38,8 +36,8 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Interface
 
     public enum EScreenStatus
     {
+        None,
         Opened,
         Closed,
-        Destroyed,
     }
 }

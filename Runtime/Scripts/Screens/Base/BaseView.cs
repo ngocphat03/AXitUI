@@ -2,8 +2,8 @@
 {
     using System;
     using UnityEngine;
-    using AXitUnityTemplate.AXitUI.Runtime.Scripts.ScreenTransition;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
+    using AXitUnityTemplate.UI.Runtime.Scripts.ScreenTransition;
 
     [RequireComponent(typeof(CanvasGroup), typeof(ScreenTransition))]
     public class BaseView : MonoBehaviour, IScreenView
@@ -31,7 +31,6 @@
             this.screenTransition ??= this.transform.GetComponent<ScreenTransition>();
             this.RectTransform    ??= this.GetComponent<RectTransform>();
 
-            this.UpdateAlpha(0);
             this.OnViewReady?.Invoke();
         }
 
