@@ -1,4 +1,4 @@
-﻿namespace AXitUnityTemplate.AXitUI.Runtime.Scripts.Screens.Base
+﻿namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
 {
     using System;
     using UnityEngine;
@@ -8,10 +8,10 @@
     [RequireComponent(typeof(CanvasGroup), typeof(ScreenTransition))]
     public class BaseView : MonoBehaviour, IScreenView
     {
-        [SerializeField] private CanvasGroup      viewRoot;
-        [SerializeField] private ScreenTransition screenTransition;
-
         #region Public Properties
+
+        [field: SerializeField] public virtual CanvasGroup      ViewRoot         { get; protected set; }
+        [field: SerializeField] public virtual ScreenTransition ScreenTransition { get; protected set; }
 
         public RectTransform RectTransform { get; private set; }
         public bool          blockRaycastHit = true;
@@ -22,14 +22,11 @@
 
         #endregion
 
-        protected virtual CanvasGroup      ViewRoot         { get => this.viewRoot;         set => this.viewRoot = value; }
-        protected virtual ScreenTransition ScreenTransition { get => this.screenTransition; set => this.screenTransition = value; }
-
         private void Awake()
         {
-            this.viewRoot         ??= this.GetComponent<CanvasGroup>();
-            this.screenTransition ??= this.transform.GetComponent<ScreenTransition>();
-            this.RectTransform    ??= this.GetComponent<RectTransform>();
+            if (!this.ViewRoot) this.ViewRoot                 = this.GetComponent<CanvasGroup>();
+            if (!this.ScreenTransition) this.ScreenTransition = this.transform.GetComponent<ScreenTransition>();
+            if (!this.RectTransform) this.RectTransform       = this.GetComponent<RectTransform>();
 
             this.OnViewReady?.Invoke();
         }
@@ -37,7 +34,7 @@
         public virtual void Open(Action onCompleted = null)
         {
             this.UpdateAlpha(1f);
-            this.screenTransition.PlayIntroAnimation(() =>
+            this.ScreenTransition.PlayIntroAnimation(() =>
             {
                 this.OnOpen?.Invoke();
                 onCompleted?.Invoke();
@@ -46,8 +43,9 @@
 
         public virtual void Close(Action onCompleted = null)
         {
-            this.screenTransition.PlayOutroAnimation(() =>
+            this.ScreenTransition.PlayOutroAnimation(() =>
             {
+                Debug.LogError("cc");
                 this.UpdateAlpha(0);
                 onCompleted?.Invoke();
                 this.OnClose?.Invoke();
@@ -62,7 +60,7 @@
 
         private void UpdateAlpha(float value)
         {
-            if (this.viewRoot == null) return;
+            if (this.ViewRoot == null) return;
             this.ViewRoot.alpha          = value;
             this.ViewRoot.blocksRaycasts = this.blockRaycastHit && value >= 1;
         }

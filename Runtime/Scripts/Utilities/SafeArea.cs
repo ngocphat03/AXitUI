@@ -1,4 +1,4 @@
-namespace AXitUnityTemplate.AXitUI.Runtime.Scripts.Utilities
+namespace AXitUnityTemplate.UI.Runtime.Scripts.Utilities
 {
     using UnityEngine;
 

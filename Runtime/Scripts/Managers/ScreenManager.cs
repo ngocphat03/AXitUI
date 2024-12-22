@@ -7,7 +7,7 @@
     using System.Collections.Generic;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
     using AXitUnityTemplate.AssetLoader.Runtime.Interface;
-    using AXitUnityTemplate.AXitUI.Runtime.Scripts.Screens.Base;
+    using AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base;
     using Cysharp.Threading.Tasks;
 
 #if ZENJECT
@@ -41,6 +41,8 @@
         private IScreenPresenter CurrentScreen { get; set; }
 
         private readonly Dictionary<Type, IScreenPresenter> screensPresenterLoaded = new(10);
+        
+        private List<IScreenPresenter> historyScreen = new();
 
         public void OpenScreen<T>(Action<T> onComplete = default) where T : IScreenPresenter
         {
@@ -53,6 +55,7 @@
                     return;
                 }
 
+                this.historyScreen.Add(presenter);
                 this.StartCoroutine(CloseAndOpenScreen(presenter));
             });
 
@@ -61,7 +64,8 @@
             IEnumerator CloseAndOpenScreen(IScreenPresenter presenter)
             {
                 // Close current screen
-                this.CloseCurrentScreen();
+                this.CurrentScreen?.CloseView();
+                this.CurrentScreen?.SetViewParent(this.ClosedScreenParent);
 
                 // Wait until current screen is closed
                 while (this.CurrentScreen?.EScreenStatus == EScreenStatus.Opened) yield return null;
@@ -79,9 +83,25 @@
             }
         }
 
-        public void CloseScreen<T>() where T : IScreenPresenter { }
+        public void CloseScreen<T>() where T : IScreenPresenter
+        {
+            if (!this.screensPresenterLoaded.TryGetValue(typeof(T), out var presenter))
+            {
+                Debug.LogError($"The {typeof(T).Name} screen does not exist");
+                return;
+            }
+            
+            if(presenter.EScreenStatus == EScreenStatus.Closed) return;
+            presenter.CloseView();
+            presenter.SetViewParent(this.ClosedScreenParent);
+            
+            // Check and open last screen
+            this.historyScreen.Remove(presenter);
+            var lastScreen = this.historyScreen.LastOrDefault();
+            lastScreen?.OpenView();
+        }
 
-        public void OpenPopup<T>() where T : IScreenPresenter
+        public void OpenPopup<T>(Action<T> onComplete = default) where T : IScreenPresenter
         {
             this.GetScreen<T>(presenter =>
             {
@@ -92,23 +112,16 @@
                     return;
                 }
 
-                this.StartCoroutine(CloseAndOpenScreen(presenter));
+                this.StartCoroutine(CheckAndOpenPopup(presenter));
             });
 
             return;
             
-            IEnumerator CloseAndOpenScreen(IScreenPresenter presenter)
+            IEnumerator CheckAndOpenPopup(IScreenPresenter presenter)
             {
-                // Close current screen
-                this.CloseCurrentScreen();
-
-                // Wait until current screen is closed
-                while (this.CurrentScreen?.EScreenStatus == EScreenStatus.Opened) yield return null;
-
-                // Open new screen
-                this.CurrentScreen = presenter;
-                this.CurrentScreen.SetViewParent(this.OpenedScreenParent);
-                this.CurrentScreen.OpenView();
+                // Open popup
+                presenter.SetViewParent(this.OpenedScreenParent);
+                presenter.OpenView();
 
                 // Wait until new screen is opened
                 while (this.CurrentScreen.EScreenStatus == EScreenStatus.Closed) yield return null;
@@ -118,7 +131,17 @@
             }
         }
 
-        public void ClosePopup<T>() where T : IScreenPresenter { }
+        public void ClosePopup<T>() where T : IScreenPresenter
+        {
+            if (!this.screensPresenterLoaded.TryGetValue(typeof(T), out var presenter))
+            {
+                Debug.LogError($"The {typeof(T).Name} screen does not exist");
+                return;
+            }
+            
+            presenter.CloseView();
+            presenter.SetViewParent(this.ClosedScreenParent);
+        }
 
         public void GetScreen<T>(Action<T> onComplete) where T : IScreenPresenter
         {
@@ -193,8 +216,6 @@
 
 #endif
         }
-
-        public void CloseCurrentScreen() { this.CurrentScreen?.CloseView(); }
 
         private void FindScreenInScene()
         {

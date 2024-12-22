@@ -2,8 +2,10 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
 {
     using System;
     using UnityEngine;
+    using System.Diagnostics;
+    using Debug = UnityEngine.Debug;
+    using AXitUnityTemplate.UI.Runtime.Scripts.Managers;
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
-    using AXitUnityTemplate.AXitUI.Runtime.Scripts.Screens.Base;
 
     public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseView
     {
@@ -17,7 +19,7 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
 
         public abstract string ScreenPath { get; }
 
-        public void SetViewParent(Transform parent) { this.View.transform.parent = parent; }
+        public void SetViewParent(Transform parent) { this.View.transform.SetParent(parent); }
 
         public void SetView(IScreenView viewInstance, Action<IScreenPresenter> onClose = null)
         {
@@ -31,6 +33,7 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
 
         public void OpenView()
         {
+            Debug.LogError($"OPEN VIEW: {this.View.gameObject.name}");
             if (this.EScreenStatus == EScreenStatus.Opened)
             {
                 Debug.LogWarning("Screen is already opened");
@@ -38,7 +41,8 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
                 return;
             }
 
-            this.EScreenStatus = EScreenStatus.Opened;
+            this.View.ViewRoot.blocksRaycasts = true;
+            this.EScreenStatus                = EScreenStatus.Opened;
             this.OnEnable();
             this.View.Open();
         }
@@ -52,7 +56,8 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
                 return;
             }
 
-            this.EScreenStatus = EScreenStatus.Closed;
+            this.View.ViewRoot.blocksRaycasts = false;
+            this.EScreenStatus                = EScreenStatus.Closed;
             this.View.Close(onCompleted: this.OnDisable);
         }
 

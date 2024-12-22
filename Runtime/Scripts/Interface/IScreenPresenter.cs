@@ -5,17 +5,17 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Interface
 
     public interface IScreenPresenter
     {
-        public string                   ScreenId      { get; }
-        public abstract string ScreenPath { get; }
-        public EScreenStatus            EScreenStatus { get; }
-        public Action<IScreenPresenter> OnCloseView   { get; set; }
+        public          string                   ScreenId      { get; }
+        public abstract string                   ScreenPath    { get; }
+        public          EScreenStatus            EScreenStatus { get; }
+        public          Action<IScreenPresenter> OnCloseView   { get; set; }
 
         public void SetViewParent(Transform parent);
 
         public void SetView(IScreenView viewInstance, Action<IScreenPresenter> onClose = null);
 
         public Transform CurrentTransform { get; }
-        
+
         public void OpenView();
 
         public void CloseView();

@@ -60,7 +60,10 @@
             if (this.isPlaying) return;
             
             // If view don't has animation. Call finish action
-            if (animationPlay == null) onFinish?.Invoke();
+            if (animationPlay == null)
+            {
+                onFinish?.Invoke();
+            }
 
             this.isPlaying         = true;
             this.onFinishAnimation = onFinish;
