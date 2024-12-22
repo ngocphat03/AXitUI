@@ -39,9 +39,20 @@
             }
         }
 
-        public void PlayIntroAnimation(Action onFinish = null) => this.PlayAnimation(this.intro, onFinish);
+        public void PlayIntroAnimation(Action onFinish = null)
+        {
+            this.SetInputLock(false);
+            this.PlayAnimation(this.intro, onFinish);
+        }
 
-        public void PlayOutroAnimation(Action onFinish = null) => this.PlayAnimation(this.outro, onFinish);
+        public void PlayOutroAnimation(Action onFinish = null)
+        {
+            this.PlayAnimation(this.outro, () =>
+            {
+                onFinish?.Invoke();
+                this.SetInputLock(true);
+            });
+        }
 
         private void PlayAnimation(PlayableDirector animationPlay, Action onFinish)
         {
@@ -53,7 +64,6 @@
 
             this.isPlaying         = true;
             this.onFinishAnimation = onFinish;
-            this.SetInputLock(false);
             animationPlay?.Play();
         }
 
@@ -65,6 +75,10 @@
             this.onFinishAnimation = null;
         }
 
-        private void SetInputLock(bool value) { this.eventSystem.enabled = this.lockInput && value; }
+        private void SetInputLock(bool value)
+        {
+            // this.eventSystem.enabled = value;
+            
+        }
     }
 }

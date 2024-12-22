@@ -13,7 +13,7 @@
         private readonly DiContainer diContainer;
         public ScreenFactory(DiContainer diContainer) { this.diContainer = diContainer; }
 #else
-        public ScreenFactory()
+        public ScreenFactory() {}
 #endif
 
         public IScreenPresenter CreateScreenPresenter(Type screenPresenterType)

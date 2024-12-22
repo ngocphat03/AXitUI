@@ -8,6 +8,7 @@
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
     using AXitUnityTemplate.AssetLoader.Runtime.Interface;
     using AXitUnityTemplate.AXitUI.Runtime.Scripts.Screens.Base;
+    using Cysharp.Threading.Tasks;
 
 #if ZENJECT
     using Zenject;
@@ -23,13 +24,13 @@
 
 #if ZENJECT
         public ScreenFactory ScreenFactory { get; private set; }
-        public IAssetLoader  AssetLoader   { get; private set; }
+        public static IAssetLoader  AssetLoader   { get; private set; }
 
         [Inject]
         public void Init(ScreenFactory screenFactory, IAssetLoader assetLoader)
         {
-            this.ScreenFactory = screenFactory;
-            this.AssetLoader   = assetLoader;
+            this.ScreenFactory        = screenFactory;
+            ScreenManager.AssetLoader = assetLoader;
             this.FindScreenInScene();
         }
 #else
@@ -80,7 +81,42 @@
 
         public void CloseScreen<T>() where T : IScreenPresenter { }
 
-        public T OpenPopup<T>() where T : IScreenPresenter { return default; }
+        public void OpenPopup<T>() where T : IScreenPresenter
+        {
+            this.GetScreen<T>(presenter =>
+            {
+                if (presenter == null)
+                {
+                    Debug.LogError($"The {typeof(T).Name} screen does not exist");
+
+                    return;
+                }
+
+                this.StartCoroutine(CloseAndOpenScreen(presenter));
+            });
+
+            return;
+            
+            IEnumerator CloseAndOpenScreen(IScreenPresenter presenter)
+            {
+                // Close current screen
+                this.CloseCurrentScreen();
+
+                // Wait until current screen is closed
+                while (this.CurrentScreen?.EScreenStatus == EScreenStatus.Opened) yield return null;
+
+                // Open new screen
+                this.CurrentScreen = presenter;
+                this.CurrentScreen.SetViewParent(this.OpenedScreenParent);
+                this.CurrentScreen.OpenView();
+
+                // Wait until new screen is opened
+                while (this.CurrentScreen.EScreenStatus == EScreenStatus.Closed) yield return null;
+
+                // Invoke onComplete callback
+                onComplete?.Invoke((T)this.CurrentScreen);
+            }
+        }
 
         public void ClosePopup<T>() where T : IScreenPresenter { }
 
@@ -95,11 +131,39 @@
 
                 return;
             }
-
+#if UNITASK
+            InstantiateScreen(onComplete).Forget();
+#else
             this.StartCoroutine(InstantiateScreen(onComplete));
+#endif
 
             return;
+#if UNITASK
+            async UniTask InstantiateScreen(Action<T> callback)
+            {
+                screenPresenter = this.ScreenFactory.CreateScreenPresenter<T>();
+                var view = await ScreenManager.AssetLoader.LoadAssetAsync<GameObject>(screenPresenter.ScreenPath).ToUniTask();
 
+                // Get the view object
+                var viewObject = UnityEngine.Object.Instantiate(view, this.OpenedScreenParent);
+
+                // Check has view object
+                if (!viewObject.TryGetComponent<IScreenView>(out var viewInstance))
+                {
+                    Debug.LogError($"The {screenPresenter.ScreenPath} does not have a view component");
+
+                    return;
+                }
+
+                screenPresenter.SetView(viewInstance);
+
+                // Cache the presenter
+                this.screensPresenterLoaded[screenType] = screenPresenter;
+
+                callback?.Invoke((T)screenPresenter);
+            }
+
+#else
             IEnumerator InstantiateScreen(Action<T> callback)
             {
                 screenPresenter = this.ScreenFactory.CreateScreenPresenter<T>();
@@ -126,6 +190,8 @@
 
                 callback?.Invoke((T)screenPresenter);
             }
+
+#endif
         }
 
         public void CloseCurrentScreen() { this.CurrentScreen?.CloseView(); }
@@ -139,10 +205,10 @@
                 if (baseView is not IScreenDefaultInScene screenDefault) continue;
 
                 var screenPresenter = this.ScreenFactory.CreateScreenPresenter(screenDefault.TypeScreenPresenter);
-                
+
                 // Set up view
-                this.screensPresenterLoaded[screenDefault.TypeScreenPresenter] = screenPresenter;
-                baseView.OnViewReady += () => screenPresenter.SetView(baseView);
+                this.screensPresenterLoaded[screenDefault.TypeScreenPresenter] =  screenPresenter;
+                baseView.OnViewReady                                           += () => screenPresenter.SetView(baseView);
             }
         }
     }
