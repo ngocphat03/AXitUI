@@ -1,6 +1,7 @@
 ﻿namespace AXitUnityTemplate.UI.Runtime.Scripts.ScreenTransition
 {
     using System;
+    using System.Collections;
     using UnityEngine;
     using UnityEngine.Playables;
     using UnityEngine.EventSystems;
@@ -33,9 +34,8 @@
             foreach (var director in new[] { this.intro, this.outro })
             {
                 if (!director.playableAsset) break;
-                director.timeUpdateMode =  this.timeUpdateMode;
-                director.playOnAwake    =  false;
-                director.stopped        += this.OnAnimationComplete;
+                director.timeUpdateMode = this.timeUpdateMode;
+                director.playOnAwake    = false;
             }
         }
 
@@ -58,30 +58,30 @@
         {
             // Just play one times
             if (this.isPlaying) return;
-            
-            // If view don't has animation. Call finish action
-            if (animationPlay == null)
-            {
-                onFinish?.Invoke();
-            }
+            this.isPlaying = true;
 
-            this.isPlaying         = true;
             this.onFinishAnimation = onFinish;
             animationPlay?.Play();
-        }
 
-        private void OnAnimationComplete(PlayableDirector director)
-        {
-            this.isPlaying = false;
-            this.SetInputLock(true);
-            this.onFinishAnimation?.Invoke();
-            this.onFinishAnimation = null;
+            this.StartCoroutine(OnAnimationCompleteCoroutine());
+
+            return;
+
+            IEnumerator OnAnimationCompleteCoroutine()
+            {
+                // Wait until animation is done
+                yield return new WaitUntil(() => animationPlay && animationPlay.state != PlayState.Playing);
+
+                this.isPlaying = false;
+                this.SetInputLock(true);
+                this.onFinishAnimation?.Invoke();
+                this.onFinishAnimation = null;
+            }
         }
 
         private void SetInputLock(bool value)
         {
             // this.eventSystem.enabled = value;
-            
         }
     }
 }

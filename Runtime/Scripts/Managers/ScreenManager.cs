@@ -97,8 +97,9 @@
             
             // Check and open last screen
             this.historyScreen.Remove(presenter);
-            var lastScreen = this.historyScreen.LastOrDefault();
-            lastScreen?.OpenView();
+            this.CurrentScreen = this.historyScreen.LastOrDefault();
+            this.CurrentScreen?.SetViewParent(this.OpenedScreenParent);
+            this.CurrentScreen?.OpenView();
         }
 
         public void OpenPopup<T>(Action<T> onComplete = default) where T : IScreenPresenter
@@ -229,7 +230,11 @@
 
                 // Set up view
                 this.screensPresenterLoaded[screenDefault.TypeScreenPresenter] =  screenPresenter;
-                baseView.OnViewReady                                           += () => screenPresenter.SetView(baseView);
+                baseView.OnViewReady                                           += () =>
+                {
+                    screenPresenter.SetView(baseView);
+                    screenPresenter.OpenView();
+                };
             }
         }
     }

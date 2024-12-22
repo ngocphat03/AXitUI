@@ -45,7 +45,6 @@
         {
             this.ScreenTransition.PlayOutroAnimation(() =>
             {
-                Debug.LogError("cc");
                 this.UpdateAlpha(0);
                 onCompleted?.Invoke();
                 this.OnClose?.Invoke();
@@ -60,7 +59,7 @@
 
         private void UpdateAlpha(float value)
         {
-            if (this.ViewRoot == null) return;
+            if (!this.ViewRoot) return;
             this.ViewRoot.alpha          = value;
             this.ViewRoot.blocksRaycasts = this.blockRaycastHit && value >= 1;
         }

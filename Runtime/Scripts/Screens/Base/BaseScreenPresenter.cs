@@ -28,12 +28,10 @@ namespace AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base
             if (!this.View) throw new Exception("View is not of type TView");
 
             this.Awake();
-            this.OpenView();
         }
 
         public void OpenView()
         {
-            Debug.LogError($"OPEN VIEW: {this.View.gameObject.name}");
             if (this.EScreenStatus == EScreenStatus.Opened)
             {
                 Debug.LogWarning("Screen is already opened");
