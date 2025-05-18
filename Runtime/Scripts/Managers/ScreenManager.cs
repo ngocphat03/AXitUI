@@ -8,7 +8,10 @@
     using AXitUnityTemplate.UI.Runtime.Scripts.Interface;
     using AXitUnityTemplate.AssetLoader.Runtime.Interface;
     using AXitUnityTemplate.UI.Runtime.Scripts.Screens.Base;
+
+#if UNITASK
     using Cysharp.Threading.Tasks;
+#endif
 
 #if ZENJECT
     using Zenject;
@@ -35,7 +38,9 @@
         }
 #else
         public readonly ScreenFactory ScreenFactory = new();
-        public static   IAssetLoader  AssetLoader => DependencyLocator.AssetLoader;
+        public static IAssetLoader AssetLoader = DependencyLocator.Resolve();
+        private static ScreenManager instance;
+        public static ScreenManager Instance => instance ??= UnityEngine.Object.FindObjectOfType<ScreenManager>();
 #endif
 
         private IScreenPresenter CurrentScreen { get; set; }
@@ -237,5 +242,7 @@
                 };
             }
         }
+        
+        public static Func<ScreenManager> Resolve = () => Instance;
     }
 }
