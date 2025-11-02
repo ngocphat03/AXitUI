@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2060534047901033160}
   - component: {fileID: 1198561119213133591}
   - component: {fileID: 534352544144342921}
-  - component: {fileID: 5614496603785739244}
   m_Layer: 0
   m_Name: UICamera
   m_TagString: MainCamera
