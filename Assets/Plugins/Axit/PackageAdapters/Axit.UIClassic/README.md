@@ -1,0 +1,563 @@
+# Unity UI Framework
+
+A Unity UI framework based on MVP (Model-View-Presenter) pattern with Coroutine and callback support for managing screens and popups in Unity applications.
+
+## Features
+
+- **MVP Architecture**: Clean separation of concerns with Model, View, and Presenter pattern
+- **Coroutine-Based**: Built with Unity Coroutines for asynchronous operations with callback pattern
+- **Screen Management**: Full-featured screen navigation system
+- **Popup System**: Overlay popup management with stacking support
+- **Secure Access Control**: Internal interface system ensures only ScreenManager can manage UI lifecycle
+- **Dependency Injection Ready**: Compatible with Zenject and VContainer
+- **Transition Animations**: Built-in UI transition support
+- **Resource Management**: Supports both Resources and Addressables loading
+- **Safe Area Support**: Mobile-friendly safe area handling
+
+## Architecture Overview
+
+The framework follows the MVP pattern where:
+- **Model**: Contains data and business logic
+- **View**: Contains UI components and visual elements
+- **Presenter**: Handles user interactions and coordinates between Model and View
+
+### Core Components
+
+#### Security Architecture
+**Definition**: The framework implements a secure access control system using internal interfaces to ensure that only the ScreenManager can control UI lifecycle methods.
+
+Key characteristics:
+- `IUiManagerAccess` internal interface restricts access to critical methods
+- Explicit interface implementation prevents direct method calls
+- Only ScreenManager can call: `SetView`, `SetViewParent`, `OpenView`, `CloseView`, `SetModel`
+- Compile-time safety prevents unauthorized access
+- High performance without runtime checks
+
+Components:
+- `IUiManagerAccess`: Internal interface for ScreenManager-only access
+- `IUiPresenter`: Public interface with safe methods only
+
+#### Screen System
+**Definition**: A Screen is a main interface that can only be displayed one at a time. When a new screen is opened, it replaces the current screen. When a screen is closed, the previous screen is automatically restored.
+
+Key characteristics:
+- Only one screen can be active at a time
+- Opening a new screen replaces the current one
+- Closing a screen returns to the previous screen
+- Manages the main navigation flow of the application
+
+Components:
+- `BaseScreenModel`: Data container for screens
+- `BaseScreenView`: MonoBehaviour containing UI components
+- `BaseScreenPresenter<TView, TModel>`: Logic handler for screen interactions
+- `ScreenManager`: Manages screen lifecycle and navigation
+
+#### Popup System
+**Definition**: A Popup is an overlay interface that can be displayed on top of screens or other popups. Multiple popups can be open simultaneously and they stack on top of each other. Closing a popup only affects that specific popup and doesn't impact other screens or popups.
+
+Key characteristics:
+- Multiple popups can be open at the same time
+- Popups stack on top of each other and the current screen
+- Closing a popup only closes that specific popup
+- Does not affect the underlying screen or other popups
+- Used for dialogs, notifications, settings panels, etc.
+
+Components:
+- `BasePopupModel`: Data container for popups
+- `BasePopupView`: MonoBehaviour containing popup UI components
+- `BasePopupPresenter<TView, TModel>`: Logic handler for popup interactions
+
+#### Transition System
+**Definition**: The framework includes an automatic transition system that plays animations when opening or closing screens and popups.
+
+Key characteristics:
+- Automatically plays open/close animations using Timeline
+- If no animation timeline is configured, screens and popups open/close instantly
+- Supports custom transition animations through Timeline assets
+- Smooth visual transitions enhance user experience
+- Non-blocking Coroutine operations during transitions with callback support
+
+## Installation
+
+### Via Unity Package Manager (Recommended)
+
+1. Open Unity Package Manager (Window > Package Manager)
+2. Click the **+** button in the top-left corner
+3. Select **"Add package from git URL..."**
+4. Enter the following URL:
+   ```
+   https://github.com/ngocphat03/Axit.UI.Classic.git?path=/Assets/Plugins/Axit/PackageAdapters/Axit.UI.Classic&ref=release
+   ```
+5. Click **Add**
+
+### Via manifest.json
+
+Alternatively, you can add the package directly to your `manifest.json` file:
+
+1. Open `Packages/manifest.json` in your Unity project
+2. Add the following line to the `dependencies` section:
+   ```json
+   {
+     "dependencies": {
+       "com.axit.ui.classic": "https://github.com/ngocphat03/Axit.UI.Classic.git?path=/Assets/Plugins/Axit/PackageAdapters/Axit.UI.Classic#release"
+     }
+   }
+   ```
+
+### Required Dependencies
+
+- TextMeshPro (if using text components)
+
+### Optional Dependencies
+
+- Zenject or VContainer (for dependency injection)
+- Addressables (for asset loading)
+
+## Quick Start
+
+### 1. Setup Scene
+
+Simply add the `RootUI` prefab to your scene. The prefab contains all necessary components:
+
+```
+Scene
+└── RootUI (prefab)
+    ├── UICamera
+    └── SimpleRootUI
+        ├── UiOpen
+        └── UiClose
+```
+
+**Steps:**
+1. Drag the `RootUI` prefab from `Runtime/Prefabs/Components/` into your scene
+2. That's it! The framework is ready to use
+
+**Important Notes:**
+- Most screens and popups are loaded dynamically from prefabs in the Resources folder
+- Only use `[ViewInitInScene]` attribute for Views that are permanently placed in the Scene
+- Views with `[ViewInitInScene]` should be placed under `UiOpen` in the Scene hierarchy
+
+## Quick Creation Tools
+
+The framework includes Unity Editor tools to quickly create screens and popups with proper MVP structure.
+
+### Creating UI Scripts
+
+1. **Right-click in Project window** on any folder
+2. Go to **Create > UnityTemplate > UI > Create Classic UI Script**
+3. **Enter the class name** (e.g., "MainMenu", "Settings", "Inventory")
+4. **Select UI Mode**: Screen or Popup
+5. Click **Create UI Script**
+
+This will generate a complete script file with:
+- Model class (`[ClassName]Model`)
+- View class (`[ClassName]View`) 
+- Presenter class (`[ClassName]Presenter`)
+- All required overrides and proper inheritance
+
+**Example**: Creating "MainMenu" Screen will generate:
+```csharp
+using UnityTemplate.UI;
+
+public class MainMenuModel : BaseScreenModel
+{
+}
+
+public class MainMenuView : BaseScreenView
+{
+}
+
+public class MainMenuPresenter : BaseScreenPresenter<MainMenuView, MainMenuModel>
+{
+    public override string ScreenPath => nameof(MainMenuView);
+    
+    public override void Awake() { }
+    public override void OnEnable() { }
+    public override void OnDisable() { }
+    public override void OnDestroy() { }
+}
+```
+
+### Creating UI Prefabs
+
+1. **Right-click in Project window** on any folder
+2. Go to **Create > UnityTemplate > UI > Create Classic UI Prefab**
+3. **Enter the prefab name** (should match your script name)
+4. **Select UI Mode**: Screen or Popup
+5. Click **Create UI Prefab**
+
+This will create a prefab variant based on the framework's base templates:
+- **Screen**: Creates prefab variant of `UITemplateScreenBase`
+- **Popup**: Creates prefab variant of `UITemplatePopupBase`
+
+**Recommended Workflow**:
+1. Create the prefab first using the prefab creation tool
+2. Create the matching script using the script creation tool
+3. Open the prefab you just created in Prefab Mode
+4. Attach your View script to the prefab's root GameObject
+5. Design your UI layout within the prefab
+6. The prefab is ready to be loaded by your Presenter
+
+### 2. Create Your First Screen (Manual Method)
+
+#### Model
+```csharp
+public class MainMenuModel : BaseScreenModel
+{
+    public string WelcomeMessage { get; set; } = "Welcome!";
+}
+```
+
+#### View
+```csharp
+// Note: Only use [ViewInitInScene] for Views that are pre-placed in the Scene (in UiOpen),
+// not for Views that are instantiated at runtime from prefabs
+public class MainMenuView : BaseScreenView
+{
+    public Button playButton;
+    public Button settingsButton;
+    public TMP_Text welcomeText;
+}
+```
+
+#### Presenter
+```csharp
+public class MainMenuPresenter : BaseScreenPresenter<MainMenuView, MainMenuModel>
+{
+    public override string ScreenPath => "Screens/MainMenuView";
+
+    public override void Awake()
+    {
+        View.welcomeText.text = Model.WelcomeMessage;
+    }
+
+    public override void OnEnable()
+    {
+        View.playButton.onClick.AddListener(OnPlayClicked);
+        View.settingsButton.onClick.AddListener(OnSettingsClicked);
+    }
+
+    public override void OnDisable()
+    {
+        View.playButton.onClick.RemoveListener(OnPlayClicked);
+        View.settingsButton.onClick.RemoveListener(OnSettingsClicked);
+    }
+
+    private void OnPlayClicked()
+    {
+        ScreenManager.Instance.OpenScreen<GamePresenter, GameModel>(null, (presenter) =>
+        {
+            // Screen opened successfully
+        });
+    }
+
+    private void OnSettingsClicked()
+    {
+        ScreenManager.Instance.OpenPopup<SettingsPresenter, SettingsModel>(null, (presenter) =>
+        {
+            // Popup opened successfully
+        });
+    }
+
+    public override void OnDestroy() { }
+}
+```
+
+### 3. Create Your First Popup
+
+#### Model
+```csharp
+public class SettingsModel : BasePopupModel
+{
+    public float MasterVolume { get; set; } = 1.0f;
+}
+```
+
+#### View
+```csharp
+public class SettingsView : BasePopupView
+{
+    public Slider volumeSlider;
+    public Button closeButton;
+}
+```
+
+#### Presenter
+```csharp
+public class SettingsPresenter : BasePopupPresenter<SettingsView, SettingsModel>
+{
+    public override string PopupPath => "Popups/SettingsView";
+
+    public override void Awake()
+    {
+        View.volumeSlider.value = Model.MasterVolume;
+    }
+
+    public override void OnEnable()
+    {
+        View.volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+        View.closeButton.onClick.AddListener(() => OnCloseView());
+    }
+
+    public override void OnDisable()
+    {
+        View.volumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+    }
+
+    private void OnVolumeChanged(float value)
+    {
+        Model.MasterVolume = value;
+        // Apply volume settings
+    }
+
+    public override void OnDestroy() { }
+}
+```
+
+## API Reference
+
+### Security Architecture
+
+The framework implements a secure access control system to prevent unauthorized access to critical UI lifecycle methods.
+
+#### Access Control
+
+The framework uses **internal interfaces** and **explicit interface implementation** to ensure only `ScreenManager` can control UI lifecycle:
+
+```csharp
+// These methods are NOT accessible directly:
+presenter.SetView(view);        // Compile error
+presenter.SetViewParent(parent); // Compile error
+presenter.OpenView();           // Compile error
+presenter.CloseView();          // Compile error
+presenter.SetModel(model);      // Compile error
+
+// Only ScreenManager can access these via IUiManagerAccess:
+((IUiManagerAccess)presenter).SetView(view);
+((IUiManagerAccess)presenter).SetViewParent(parent);
+StartCoroutine(((IUiManagerAccess)presenter).OpenView(callback));
+StartCoroutine(((IUiManagerAccess)presenter).CloseView(callback));
+((IUiManagerAccess)presenter).SetModel(model);
+```
+
+#### Safe Methods Available to Presenters
+
+```csharp
+// Safe methods that Presenters can use:
+presenter.OnCloseView();        // Close from within Presenter
+presenter.EUiStatus;           // Check current status
+presenter.CurrentTransform;    // Get transform reference
+```
+
+#### Key Interfaces
+
+- **`IUiPresenter`**: Public interface with safe methods only
+- **`IUiManagerAccess`**: Internal interface for ScreenManager exclusive access
+- **`IScreenPresenter`**: Screen-specific public interface
+- **`IPopupPresenter`**: Popup-specific public interface
+
+### ScreenManager
+
+The main entry point for screen and popup management.
+
+#### Methods
+
+```csharp
+// Open a new screen with callback
+ScreenManager.Instance.OpenScreen<TPresenter, TModel>(model, (presenter) =>
+{
+    // Screen opened successfully, do something with presenter
+});
+
+// Open a new screen without callback
+ScreenManager.Instance.OpenScreen<TPresenter, TModel>(model);
+
+// Open a popup with callback
+ScreenManager.Instance.OpenPopup<TPresenter, TModel>(model, (presenter) =>
+{
+    // Popup opened successfully, do something with presenter
+});
+
+// Open a popup without callback
+ScreenManager.Instance.OpenPopup<TPresenter, TModel>(model);
+
+// Close specific screen with callback
+ScreenManager.Instance.CloseScreen<TPresenter>(() =>
+{
+    // Screen closed successfully
+});
+
+// Close specific popup with callback
+ScreenManager.Instance.ClosePopup<TPresenter>(() =>
+{
+    // Popup closed successfully
+});
+
+// Close all screens and popups
+ScreenManager.Instance.CloseAllScreensAndPopups();
+
+// Get a screen reference with callback
+ScreenManager.Instance.GetScreen<TPresenter>(model, (presenter) =>
+{
+    // Got screen presenter reference
+});
+
+// Get a popup reference with callback
+ScreenManager.Instance.GetPopup<TPresenter>(model, (presenter) =>
+{
+    // Got popup presenter reference
+});
+```
+
+### Base Classes
+
+#### BaseScreenPresenter<TView, TModel>
+
+Required overrides:
+- `string ScreenPath`: Path to the screen prefab (supports both Resources and Addressables loading)
+- `void Awake()`: Called when screen is first created
+- `void OnEnable()`: Called when screen becomes active
+- `void OnDisable()`: Called when screen becomes inactive
+- `void OnDestroy()`: Called when screen is destroyed
+
+**Important Note**: To close a screen from within its Presenter, call `OnCloseView()` method. The framework's security system prevents direct access to `CloseView()` - only `ScreenManager` can call this method through the internal interface system.
+
+#### BasePopupPresenter<TView, TModel>
+
+Required overrides:
+- `string PopupPath`: Path to the popup prefab (supports both Resources and Addressables loading)
+- `void Awake()`: Called when popup is first created
+- `void OnEnable()`: Called when popup becomes active
+- `void OnDisable()`: Called when popup becomes inactive
+- `void OnDestroy()`: Called when popup is destroyed
+
+**Important Note**: To close a popup from within its Presenter, call `OnCloseView()` method. The framework's security system prevents direct access to `CloseView()` - only `ScreenManager` can call this method through the internal interface system.
+
+### Attributes
+
+#### ViewInitInSceneAttribute
+
+Marks a View class that should be initialized within the Scene instead of being loaded from Resources or instantiated at runtime. This attribute is **only used for Views that are pre-placed in the Scene** (typically in the UiOpen parent), not for Views created dynamically from prefabs.
+
+**Usage scenarios:**
+- Views that are always visible (like HUD, main menu that's always in scene)
+- Views that need to be pre-configured in the Scene
+- Views that don't need to be loaded/unloaded dynamically
+
+**Do NOT use for:**
+- Views that are loaded from Resources folder at runtime
+- Views that are instantiated from prefabs
+- Views that need dynamic loading/unloading
+
+```csharp
+// Correct usage: For a View that exists in the Scene
+[ViewInitInScene(typeof(HUDPresenter))]
+public class HUDView : BaseScreenView
+{
+    // This View is pre-placed in the Scene, not loaded from prefab
+}
+
+// Incorrect usage: For Views loaded from Resources
+// Don't use the attribute for these cases
+public class GameMenuView : BaseScreenView
+{
+    // This View will be loaded from "Screens/GameMenuView" prefab
+}
+```
+
+## Advanced Usage
+
+### Passing Data Between Screens
+
+```csharp
+// Create model with data
+var gameModel = new GameModel 
+{ 
+    Level = 1, 
+    PlayerName = "Player1" 
+};
+
+// Open screen with data and callback
+ScreenManager.Instance.OpenScreen<GamePresenter, GameModel>(gameModel, (presenter) =>
+{
+    // Screen opened with data, you can access the presenter here
+    Debug.Log($"Opened game at level {presenter.Model.Level}");
+});
+
+// Or without callback
+ScreenManager.Instance.OpenScreen<GamePresenter, GameModel>(gameModel);
+```
+
+## Sample Project Structure
+
+The package includes a complete sample demonstrating:
+
+- Screen navigation (`FirstScreenView` ↔ `SecondScreenView`)
+- Popup management (`FirstPopupView` ↔ `SecondPopupView`)
+- Data passing between screens
+- Proper MVP implementation
+
+### Sample Files
+
+```
+Sample/
+├── Scenes/
+│   └── SampleUIClassicAsync.unity      # Demo scene
+├── Scripts/
+│   ├── Screens/
+│   │   ├── FirstScreenView.cs          # Main menu screen
+│   │   └── SecondScreenView.cs         # Secondary screen
+│   └── Popups/
+│       ├── FirstPopupView.cs           # First popup
+│       └── SecondPopupView.cs          # Second popup
+├── Resources/
+│   ├── Screens/                        # Screen prefabs
+│   └── Popups/                         # Popup prefabs
+└── TimeLine/                           # Animation timelines
+    ├── Open.playable                   # Opening transition animation
+    └── Close.playable                  # Closing transition animation
+```
+
+**Note**: The sample includes Timeline assets for smooth open/close transitions. You can customize these animations or remove them for instant transitions.
+
+## Best Practices
+
+1. **Separation of Concerns**: Keep business logic in Models, UI logic in Presenters, and only UI components in Views
+2. **Callback Pattern**: Use callbacks for handling screen/popup transitions completion. Callbacks are optional but recommended for complex flows
+3. **Memory Management**: Always unsubscribe from events in `OnDisable()` or `OnDestroy()`
+4. **Security**: Use `OnCloseView()` method to close screens or popups from within their Presenters. The framework's security system prevents direct access to lifecycle methods.
+5. **Transition Animations**: Configure Timeline assets for smooth open/close animations, or leave them empty for instant transitions
+6. **Resource Paths**: Use consistent naming conventions for prefab paths (compatible with both Resources and Addressables systems)
+7. **Model Validation**: Validate model data in Presenter's `Awake()` method
+8. **Access Control**: Never attempt to directly call `SetView`, `SetViewParent`, `OpenView`, `CloseView`, or `SetModel` - these are managed exclusively by `ScreenManager`
+9. **Coroutine Management**: The framework handles all Coroutine lifecycle internally via `ScreenManager`. You don't need to manage `StartCoroutine` manually for UI operations
+
+**Path Configuration Notes:**
+- The framework automatically detects and switches between Resources and Addressables loading based on project configuration
+- Use the same path format for both systems (e.g., "Screens/MainMenuView")
+- For Resources: Place prefabs in `Assets/Resources/Screens/` folder
+- For Addressables: Set the same path as the Addressable asset address
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Screen not opening**: Check if the `ScreenPath` or `PopupPath` matches the actual prefab location (works with both Resources and Addressables)
+2. **Memory leaks**: Ensure all event listeners are properly removed in `OnDisable()`
+3. **Access denied errors**: If you get compile errors trying to call `SetView`, `OpenView`, `CloseView`, etc., remember these methods are restricted to `ScreenManager` only. Use `OnCloseView()` to close from within Presenters.
+4. **Interface implementation errors**: Make sure your Presenters inherit from the correct base classes (`BaseScreenPresenter` or `BasePopupPresenter`)
+5. **Callback not firing**: Ensure the ScreenManager MonoBehaviour is active in the scene. Coroutines require an active MonoBehaviour to run
+
+### Debug Tips
+
+- Enable debug logs in ScreenManager to trace screen lifecycle
+- Use Unity Profiler to monitor memory usage
+- Check Console for any initialization errors
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues and questions, please create an issue in the project repository.
